@@ -13,7 +13,8 @@ from models.producer import Producer
 
 logger = logging.getLogger(__name__)
 
-
+#TODO: Whys is this extending from Produce!? -> Because it needs the topic created :(
+#   this shouldn't be this way
 class Weather(Producer):
     """Defines a simulated weather model"""
 
