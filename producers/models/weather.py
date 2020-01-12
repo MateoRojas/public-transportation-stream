@@ -18,29 +18,60 @@ logger = logging.getLogger(__name__)
 class Weather(Producer):
     """Defines a simulated weather model"""
 
+    # value_schema = avro.load(f"{Path(__file__).parents[0]}/schemas/weather_value.json")
+    #TODO: change this to be fetched from a file
+    key_schema = """
+    {
+        "namespace": "com.udacity",
+        "type": "record",
+        "name": "weather.key",
+        "fields": [
+            {
+                "name": "timestamp",
+                "type": "long"
+            }
+        ]
+    }
+    """
+    #TODO: change this to be fetched from a file
+    value_schema = """
+    {
+        "namespace": "com.udacity",
+        "type": "record",
+        "name": "weather.value",
+        "fields": [
+            {
+                "name": "temperature",
+                "type": "double"
+            },
+            {
+                "name": "status",
+                "type": {
+                    "type": "enum",
+                    "name": "status",
+                    "symbols": ["sunny", "partly_cloudy", "cloudy", "windy", "precipitation"]
+                }
+            }
+        ]
+    }
+    """
+
     status = IntEnum(
         "status", "sunny partly_cloudy cloudy windy precipitation", start=0
     )
 
     rest_proxy_url = "http://localhost:8082"
 
-    key_schema = None
-    value_schema = None
-
     winter_months = set((0, 1, 2, 3, 10, 11))
     summer_months = set((6, 7, 8))
 
     def __init__(self, month):
-        #
-        #
-        # TODO: Complete the below by deciding on a topic name, number of partitions, and number of
-        # replicas
-        #
-        #
         super().__init__(
             "weather", # TODO: Come up with a better topic name
             key_schema=Weather.key_schema,
             value_schema=Weather.value_schema,
+            number_partitions=3, #TODO check the number of partitions somewhere
+            number_replicas=1 #TODO check the number of partitions somewhere
         )
 
         self.status = Weather.status.sunny
@@ -50,16 +81,16 @@ class Weather(Producer):
         elif month in Weather.summer_months:
             self.temp = 85.0
 
-        if Weather.key_schema is None:
-            with open(f"{Path(__file__).parents[0]}/schemas/weather_key.json") as f:
-                Weather.key_schema = json.load(f)
+        # if Weather.key_schema is None:
+        #     with open(f"{Path(__file__).parents[0]}/schemas/weather_key.json") as f:
+        #         Weather.key_schema = json.load(f)
 
         #
         # TODO: Define this value schema in `schemas/weather_value.json
         #
-        if Weather.value_schema is None:
-            with open(f"{Path(__file__).parents[0]}/schemas/weather_value.json") as f:
-                Weather.value_schema = json.load(f)
+        # if Weather.value_schema is None:
+        #     with open(f"{Path(__file__).parents[0]}/schemas/weather_value.json") as f:
+        #         Weather.value_schema = json.load(f)
 
     def _set_weather(self, month):
         """Returns the current weather"""
@@ -73,41 +104,23 @@ class Weather(Producer):
 
     def run(self, month):
         self._set_weather(month)
+        value = {
+            "key_schema": Weather.key_schema,
+            "value_schema": Weather.value_schema,
+            "records": [
+                {
+                    "key": { "timestamp": self.time_millis() },
+                    "value": { "temperature": self.temp, "status": self.status.name }
+                }
+            ]
+        }
 
-        #
-        #
-        # TODO: Complete the function by posting a weather event to REST Proxy. Make sure to
-        # specify the Avro schemas and verify that you are using the correct Content-Type header.
-        #
-        #
-        logger.info("weather kafka proxy integration incomplete - skipping")
-        #resp = requests.post(
-        #    #
-        #    #
-        #    # TODO: What URL should be POSTed to?
-        #    #
-        #    #
-        #    f"{Weather.rest_proxy_url}/TODO",
-        #    #
-        #    #
-        #    # TODO: What Headers need to bet set?
-        #    #
-        #    #
-        #    headers={"Content-Type": "TODO"},
-        #    data=json.dumps(
-        #        {
-        #            #
-        #            #
-        #            # TODO: Provide key schema, value schema, and records
-        #            #
-        #            #
-        #        }
-        #    ),
-        #)
-        #resp.raise_for_status()
-
-        logger.debug(
-            "sent weather data to kafka, temp: %s, status: %s",
-            self.temp,
-            self.status.name,
+        resp = requests.post(
+           f'{Weather.rest_proxy_url}/topics/weather',
+           headers = {
+               "Content-Type": "application/vnd.kafka.avro.v2+json",
+               "Accept": "application/vnd.kafka.v2+json, application/vnd.kafka+json, application/json"
+           },
+           data=json.dumps(value),
         )
+        resp.raise_for_status()

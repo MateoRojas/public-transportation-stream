@@ -3,41 +3,17 @@
   "type": "record",
   "name": "weather.value",
   "fields": [
-    {
-      "name": "station_id",
-      "type": "int"
-    },
-    {
-      "name": "train_id",
-      "type": "string"
-    },
-    {
-      "name": "direction",
-      "type": "string"
-    },
-    {
-      "name": "line",
-      "type": {
-        "type": "enum",
-        "name": "line",
-        "symbols": ["blue", "green", "red"]
+      {
+          "name": "temperature",
+          "type": "double"
+      },
+      {
+          "name": "status",
+          "type": {
+              "type": "enum",
+              "name": "status",
+              "symbols": ["sunny", "partly_cloudy", "cloudy", "windy", "precipitation"]
+          }
       }
-    },
-    {
-      "name": "train_status",
-      "type": {
-        "type": "enum",
-        "name": "train_status",
-        "symbols": ["out_of_service", "in_service", "broken_down"]
-      }
-    },
-    {
-      "name": "prev_station_id",
-      "type": ["int", "null"]
-    },
-    {
-      "name": "prev_direction",
-      "type": ["string", "null"]
-    }
   ]
 }
