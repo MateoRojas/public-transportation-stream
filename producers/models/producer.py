@@ -42,19 +42,6 @@ class Producer:
 
         schema_registry = CachedSchemaRegistryClient(Producer.SCHEMA_REGISTRY_URL)
 
-        #
-        #
-        # TODO: Configure the broker properties below. Make sure to reference the project README
-        # and use the Host URL for Kafka and Schema Registry!
-        #
-        #
-        self.broker_properties = {
-            'bootstrap.servers': Producer.BROKER_URL,
-            'schema.registry.url': Producer.SCHEMA_REGISTRY_URL
-            # TODO
-            # TODO
-        }
-
         # If the topic does not already exist, try to create it
         # TODO: I completely dislike this way of looking for existing topics. Cause it resets every time the app is restarted
         # if self.topic_name not in Producer.existing_topics:
@@ -68,7 +55,7 @@ class Producer:
         self.producer = AvroProducer(
             {
                 'bootstrap.servers': Producer.BROKER_URL
-                # 'schema.registry.url': Producer.SCHEMA_REGISTRY_URL
+                #TODO: find if other configurations are needed
             },
             schema_registry=schema_registry,
             default_key_schema=key_schema,
@@ -95,12 +82,8 @@ class Producer:
 
     def close(self):
         """Prepares the producer for exit by cleaning up the producer"""
-        #
-        #
-        # TODO: Write cleanup code for the Producer here
-        #
-        #
-        logger.info("producer close incomplete - skipping")
+        #TODO: see if any other clean up code is needed
+        self.producer.flush()
 
     def time_millis(self):
         """Use this function to get the key for Kafka Events"""
